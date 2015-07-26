@@ -54,7 +54,7 @@ if sys.platform.startswith('win'):
      pass
   sp = z
  else:
-  system('pyinstaller -wy --clean --log-level WARN -n "%s" --distpath . main.py' % appName)
+  system(r'c:\python27\scripts\pyinstaller.exe -wy --clean --log-level WARN -n "%s" --distpath . main.py' % appName)
   sp = path.join(cwd, appName)
  output = appName
  xd = appName

@@ -22,6 +22,29 @@ directory = os.path.join(os.path.expanduser('~'), '.%s' % name)
 if not os.path.isdir(directory):
  os.mkdir(directory)
 
+special_keys = {
+ '?': '/',
+ '!': '1',
+ '"': '2',
+ '$': '4',
+ '%': '5',
+ '^': '6',
+ '&': '7',
+ '*': '8',
+ '(': '9',
+ ')': '0',
+ '|': '\\',
+ '@': '`',
+ '~': "'",
+ '<': ',',
+ '>': '.',
+ '{': '[',
+ '}': ']',
+ '+': '=',
+ '_': '-',
+ ':': ';',
+}
+
 class App(wx.App):
  """Overrides MainLoop to save the configuration."""
  def MainLoop(self, *args, **kwargs):
@@ -34,6 +57,7 @@ class App(wx.App):
     j['modes'][m.name] = []
     for key, value in m.keys.items():
      j['modes'][m.name].append([key, value])
+  j['special_keys'] = special_keys
   with open(config_file, 'w') as f:
    json.dump(j, f, indent = 1)
   return l
@@ -73,6 +97,10 @@ config.set('settings', 'timeout', 0.5, title = 'The time to wait before sending 
 config.set('settings', 'autocapitalise', './1', title = 'The punctuation (without shift) that will trigger autocapitalisation')
 config.set('settings', 'reset_mode', True, title = 'Reset the operation mode when the program starts.')
 
+config.add_section('sounds', 'Sound Preferences')
+config.set('sounds', 'keyboard', True, title = 'Play a sound when a key is pressed.')
+config.set('sounds', 'capslock', True, title = 'Play a sound when a letter or symbol was capitalised')
+
 keys = {}
 for n, k in enumerate(config.options('keys') + ['divide', 'multiply', 'subtract', 'add', 'DECIMAL']):
  keys[n] = k
@@ -85,6 +113,8 @@ if os.path.isfile(config_file):
  with open(config_file, 'r') as f:
   try:
    j = json.load(f)
+   for k, v in j.get('special_keys', {}).items():
+    special_keys[k] = v
    parse_json(config, j['config'])
    for mode_name, mode_keys in j.get('modes', {}).items():
     actual_mode_keys = OrderedDict()

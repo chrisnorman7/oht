@@ -7,6 +7,7 @@ from string import letters
 from threading import Timer
 from systray import TrayIcon
 from confmanager import NoSectionError
+from sound import Sound
 
 class Choice(wx.Choice):
  def SetHelpText(self, *args, **kwargs):
@@ -95,6 +96,9 @@ class Frame(wx.Frame):
    except wx.PyDeadObjectError:
     return # The frame has been deleted.
    if k:
+    if application.config.get('sounds', 'keyboard'):
+     s = Sound('type')
+     s.Play()
     keys = []
     try:
      shift = modes.shift_modes.index(application.config.get('settings', 'shift_mode'))
@@ -104,6 +108,9 @@ class Frame(wx.Frame):
     if shift != modes.MODE_SHIFT_CAPSLOCK:
      application.config.set('settings', 'shift_mode', modes.shift_modes[0])
     if shift in [modes.MODE_SHIFT_UPPER, modes.MODE_SHIFT_CAPSLOCK] or (self.autocapitalise and k in letters):
+     if application.config.get('sounds', 'capslock'):
+      s = Sound('capslock')
+      s.Play()
      keys.insert(0, 'shift')
     elif shift == modes.MODE_SHIFT_CTRL: # Control key.
      keys.insert(0, 'ctrl')
@@ -114,12 +121,21 @@ class Frame(wx.Frame):
      self.autocapitalise = True
     elif k == 'spacebar':
      self.autocapitalise = self.autocapitalise
+    elif k in application.special_keys:
+     keys = ['shift', application.special_keys[k]]
     else:
      self.autocapitalise = False
     self.all_keys += keys
-    release(*self.all_keys)
+    for item in self.all_keys:
+     try:
+      release(item)
+     except KeyError:
+      pass # Invalid character.
     self.all_keys = []
-    pressHoldRelease(*keys)
+    try:
+     pressHoldRelease(*keys)
+    except KeyError as e:
+     wx.MessageBox('Failed to type character: %s. Consider adding it to special keys.' % e.message, 'Error')
  
  def on_close(self, event):
   """Close and Destroy everything that needs to be gotten rid of."""

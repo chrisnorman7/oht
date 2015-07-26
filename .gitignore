@@ -2,3 +2,9 @@
 *.pyo
 *.txt
 test.*
+oht
+*.zip
+*.app
+*.spec
+build
+dist
