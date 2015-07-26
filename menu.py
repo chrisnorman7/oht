@@ -1,5 +1,6 @@
-import wx, application, modes
+import wx, application, modes, ske
 from collections import OrderedDict
+
 class Menu(wx.Menu):
  """The application popup menu."""
  def __init__(self):
@@ -7,6 +8,7 @@ class Menu(wx.Menu):
   items = OrderedDict()
   items[wx.ID_ABOUT] = ['&About', lambda event: wx.AboutBox(application.info)]
   items[wx.ID_PREFERENCES] = ['&Preferences', self.show_config]
+  items[wx.NewId()] = ['&Special Characters', lambda event: ske.SKEFrame(application.frame, title = 'Special Characters').Show(True)]
   items[wx.NewId()] = ['Add A &Mode', self.add_mode]
   items[wx.NewId()] = ['&Delete A Mode', self.delete_mode]
   items[wx.ID_EXIT] = ['&Quit', lambda event: application.frame.Close(True)]

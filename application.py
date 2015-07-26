@@ -121,7 +121,7 @@ if os.path.isfile(config_file):
     for key_name, key_value in mode_keys:
      actual_mode_keys[key_name] = key_value
     modes.operation_modes.append(modes.Mode(mode_name, actual_mode_keys, add = True))
-  except ValueError as e:
+  except MemoryError as e:
    wx.MessageBox('While loading the configuration file %s: %s. Continuing with application defaults.' % (config_file, e.message), 'Error in Configuration')
 config.set('settings', 'operation_mode', modes.operation_modes[0].name if config.get('settings', 'reset_mode') else config.get('settings', 'operation_mode'))
 
