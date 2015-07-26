@@ -50,18 +50,21 @@ alt_keys['numpad8'] = 'up_arrow'
 alt_keys['numpad9'] = 'page_up'
 alt_keys['numpad0'] = 'esc'
 alt_keys['add'] = 'alt'
-operation_modes.append(Mode('Text Editing', alt_keys))
+MODE_OPERATION_TEXT = Mode('Text Editing', alt_keys)
+operation_modes.append(MODE_OPERATION_TEXT)
 
 MODE_SHIFT_LOWER = 0 # Lower case.
 MODE_SHIFT_UPPER = 1 # Upper case.
 MODE_SHIFT_CAPSLOCK = 2 # Capslock
 MODE_SHIFT_CTRL = 3 # The control key should be added to the current key.
+MODE_SHIFT_ALT = 4 # The alt key should be added to the current key.
 
 shift_modes = [
  'Lower case',
  'Upper case',
  'Capslock',
- 'Control On'
+ 'Control on',
+ 'Alt on'
 ]
 
 def switch_mode(mode = 'operation'):
@@ -74,3 +77,7 @@ def switch_mode(mode = 'operation'):
   m = 0
  application.config.set('settings', '%s_mode' % mode, modes[m])
  output.output(modes[m])
+
+def system_mode(mode):
+ """Returns True if the given mode was added by the system."""
+ return mode in [MODE_OPERATION_STANDARD, MODE_OPERATION_NUMBERS, MODE_OPERATION_TEXT]

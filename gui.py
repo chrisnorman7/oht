@@ -3,6 +3,7 @@ from press import press, pressHoldRelease, release
 from speech import output
 from menu import get_menu
 from time import time
+from string import letters
 from threading import Timer
 from systray import TrayIcon
 from confmanager import NoSectionError
@@ -54,7 +55,7 @@ class Frame(wx.Frame):
    if mode == modes.MODE_OPERATION_STANDARD:
     press('backspace')
    else:
-    press(application.config.get(operation_modes[mode], key, 'alt'))
+    press(application.config.get(mode.name, key, 'alt'))
   elif key == 'multiply':
    self.press_current_key()
   else:
@@ -100,12 +101,14 @@ class Frame(wx.Frame):
     except ValueError: # The value got mangled.
      shift = 0
      application.config.set('settings', 'shift_mode', modes.shift_modes[0])
-    if shift in [modes.MODE_SHIFT_UPPER, modes.MODE_SHIFT_CAPSLOCK] or self.autocapitalise:
+    if shift != modes.MODE_SHIFT_CAPSLOCK:
+     application.config.set('settings', 'shift_mode', modes.shift_modes[0])
+    if shift in [modes.MODE_SHIFT_UPPER, modes.MODE_SHIFT_CAPSLOCK] or (self.autocapitalise and k in letters):
      keys.insert(0, 'shift')
     elif shift == modes.MODE_SHIFT_CTRL: # Control key.
      keys.insert(0, 'ctrl')
-    if shift == modes.MODE_SHIFT_UPPER: # Not capslock.
-     application.config.set('settings', 'shift_mode', modes.shift_modes[0])
+    elif shift == modes.MODE_SHIFT_ALT:
+     keys.insert(0, 'alt')
     keys.append(k)
     if k in application.config.get('settings', 'autocapitalise'):
      self.autocapitalise = True

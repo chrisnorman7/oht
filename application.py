@@ -26,8 +26,16 @@ class App(wx.App):
  """Overrides MainLoop to save the configuration."""
  def MainLoop(self, *args, **kwargs):
   l = super(App, self).MainLoop(*args, **kwargs)
+  j = {}
+  j['config'] = config.get_dump()
+  j['modes'] = {}
+  for m in modes.operation_modes:
+   if not modes.system_mode(m) and config.has_section(m.name):
+    j['modes'][m.name] = []
+    for key, value in m.keys.items():
+     j['modes'][m.name].append([key, value])
   with open(config_file, 'w') as f:
-   json.dump(config.get_dump(), f)
+   json.dump(j, f, indent = 1)
   return l
 
 app = App(False)
@@ -54,13 +62,13 @@ config.add_section('keys', 'Standard Keys')
 for k, v in keys.items():
  config.set('keys', k, v, title = 'The keys which can be press with %s' % k, validate = lambda value: None if len(value) else 'Keys cannot be unassigned. To quit the program, press Numpad Minus.')
 
-from modes import *
+import modes
 from gui import Choice, Frame
 import press
 
 config.add_section('settings', 'General Settings')
-config.set('settings', 'shift_mode', shift_modes[0], title = 'Shift mode (available with Numpad Decimal)', control = Choice, kwargs = dict(choices = shift_modes))
-config.set('settings', 'operation_mode', operation_modes[0].name, title = 'The current number pad mode (can be changed with Numpad Divide)', control = Choice, kwargs = dict(choices = [x.name for x in operation_modes]))
+config.set('settings', 'shift_mode', modes.shift_modes[0], title = 'Shift mode (available with Numpad Decimal)', control = Choice, kwargs = dict(choices = modes.shift_modes))
+config.set('settings', 'operation_mode', modes.operation_modes[0].name, title = 'The current number pad mode (can be changed with Numpad Divide)', control = Choice, kwargs = dict(choices = [x.name for x in modes.operation_modes]))
 config.set('settings', 'timeout', 0.5, title = 'The time to wait before sending the desired key', kwargs = dict(digits = 2))
 config.set('settings', 'autocapitalise', './1', title = 'The punctuation (without shift) that will trigger autocapitalisation')
 config.set('settings', 'reset_mode', True, title = 'Reset the operation mode when the program starts.')
@@ -77,10 +85,15 @@ if os.path.isfile(config_file):
  with open(config_file, 'r') as f:
   try:
    j = json.load(f)
+   parse_json(config, j['config'])
+   for mode_name, mode_keys in j.get('modes', {}).items():
+    actual_mode_keys = OrderedDict()
+    for key_name, key_value in mode_keys:
+     actual_mode_keys[key_name] = key_value
+    modes.operation_modes.append(modes.Mode(mode_name, actual_mode_keys, add = True))
   except ValueError as e:
-   wx.MessageBox('%s. Continuing with application defaults.', 'Error in Configuration')
-  parse_json(config, j)
-config.set('settings', 'operation_mode', operation_modes[0].name if config.get('settings', 'reset_mode') else config.get('settings', 'operation_mode'))
+   wx.MessageBox('While loading the configuration file %s: %s. Continuing with application defaults.' % (config_file, e.message), 'Error in Configuration')
+config.set('settings', 'operation_mode', modes.operation_modes[0].name if config.get('settings', 'reset_mode') else config.get('settings', 'operation_mode'))
 
 if __name__ == '__main__':
  config.get_gui().Show(True)
