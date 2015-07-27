@@ -1,0 +1,4 @@
+git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
+hg+http://hg.q-continuum.net/libloader#egg=libloader
+hg+http://hg.q-continuum.net/accessible_output2#egg=accessible_output2
+hg+http://hg.q-continuum.net/platform_utils#egg=platform_utils
