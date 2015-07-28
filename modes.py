@@ -81,3 +81,7 @@ def switch_mode(mode = 'operation'):
 def system_mode(mode):
  """Returns True if the given mode was added by the system."""
  return mode in [MODE_OPERATION_STANDARD, MODE_OPERATION_NUMBERS, MODE_OPERATION_TEXT]
+
+def get_current_mode():
+ """Returns the current operation mode."""
+ return operation_modes[[x.name for x in operation_modes].index(application.config.get('settings', 'operation_mode'))]

@@ -2,7 +2,7 @@
 # 
 #Giant dictonary to hold key name and VK value
 
-import win32api, win32con, time
+import win32con, win32api, time
 
 VK_CODE = {
  'backspace':0x08,
@@ -152,6 +152,10 @@ VK_CODE = {
  "'":0xDE,
  '`':0xC0
 }
+
+for x in dir(win32con):
+ if x.startswith('VK_'):
+  VK_CODE[x[3:].lower()] = getattr(win32con, x.upper())
 
 def press(*args):
  """

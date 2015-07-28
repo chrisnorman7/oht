@@ -47,24 +47,28 @@ class Frame(wx.Frame):
   if self.key_timer:
    self.key_timer.cancel()
   key = key.lower()
-  mode = modes.operation_modes[[x.name for x in modes.operation_modes].index(application.config.get('settings', 'operation_mode'))]
+  mode = modes.get_current_mode()
   if key == 'subtract':
    get_menu()
   elif key in ['divide', 'decimal']:
    modes.switch_mode({'divide': 'operation', 'decimal': 'shift'}[key])
+   if key == 'decimal':
+    self.autocapitalise = False
   elif key == 'add':
-   if mode == modes.MODE_OPERATION_STANDARD:
+   if mode in [modes.MODE_OPERATION_STANDARD, modes.MODE_OPERATION_NUMBERS]:
+    self.press_current_key()
     press('backspace')
    else:
-    press(application.config.get(mode.name, key, 'alt'))
+    pressHoldRelease(application.config.get(mode.name, key, 'alt'))
   elif key == 'multiply':
    self.press_current_key()
   else:
    if mode == modes.MODE_OPERATION_NUMBERS: # Pass numbers straight through.
     press(key[-1])
    elif mode == modes.MODE_OPERATION_STANDARD:
-    keys = [] # The keys to send as args to press.press.
-    if key == self.last_key:
+    if key == 'enter':
+     self.key_value = 'enter'
+    elif key == self.last_key:
      self.index += 1
     else:
      self.press_current_key()
@@ -77,13 +81,13 @@ class Frame(wx.Frame):
      self.key_value = 'spacebar'
     output.output(self.key_value)
    else:
-    self.key_value = application.config.get(mode.name, key)
-    self.press_current_key()
+    pressHoldRelease(application.config.get(mode.name, key))
   self.last_key = key
-  t = time()
-  self.key_timer = Timer(application.config.get('settings', 'timeout'), self.press_current_key, args = [t])
-  self.key_timer.start()
-  self.last_key_time = t
+  if mode == modes.MODE_OPERATION_STANDARD:
+   t = time()
+   self.key_timer = Timer(application.config.get('settings', 'timeout'), self.press_current_key, args = [t])
+   self.key_timer.start()
+   self.last_key_time = t
  
  def press_current_key(self, t = None):
   """Push the current key."""
