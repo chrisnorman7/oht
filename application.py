@@ -23,26 +23,26 @@ if not os.path.isdir(directory):
  os.mkdir(directory)
 
 special_keys = {
- '?': '/',
- '!': '1',
- '"': '2',
- '$': '4',
- '%': '5',
- '^': '6',
- '&': '7',
- '*': '8',
- '(': '9',
- ')': '0',
- '|': '\\',
- '@': '`',
- '~': "'",
- '<': ',',
- '>': '.',
- '{': '[',
- '}': ']',
- '+': '=',
- '_': '-',
- ':': ';',
+ u'?': u'/',
+ u'!': u'1',
+ u'"': u'2',
+ u'$': u'4',
+ u'%': u'5',
+ u'^': u'6',
+ u'&': u'7',
+ u'*': u'8',
+ u'(': u'9',
+ u')': u'0',
+ u'|': u'\\',
+ u'@': u'`',
+ u'~': u"'",
+ u'<': u',',
+ u'>': u'.',
+ u'{': u'[',
+ u'}': u']',
+ u'+': u'=',
+ u'_': u'-',
+ u':': u';',
 }
 
 class App(wx.App):
@@ -70,16 +70,16 @@ app.SetVendorDisplayName(vendor_name)
 
 from collections import OrderedDict
 keys = OrderedDict()
-keys['numpad1'] = r".,'/;-=\`"
-keys['numpad2'] = 'abc'
-keys['numpad3'] = 'def'
-keys['numpad4'] = 'ghi'
-keys['numpad5'] = 'jkl'
-keys['numpad6'] = 'mno'
-keys['numpad7'] = 'pqrs'
-keys['numpad8'] = 'tuv'
-keys['numpad9'] = 'wxyz'
-keys['numpad0'] = ' 1234567890'
+keys['numpad1'] = ur".,'/;-=\`"
+keys['numpad2'] = u'abc'
+keys['numpad3'] = u'def'
+keys['numpad4'] = u'ghi'
+keys['numpad5'] = u'jkl'
+keys['numpad6'] = u'mno'
+keys['numpad7'] = u'pqrs'
+keys['numpad8'] = u'tuv'
+keys['numpad9'] = u'wxyz'
+keys['numpad0'] = u' 1234567890'
 
 config = ConfManager('%s Config' % name)
 config.add_section('keys', 'Standard Keys')
