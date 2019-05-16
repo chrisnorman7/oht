@@ -1,2 +1,2 @@
 # oht
-One-handed typing.
+Onehanded typing.
