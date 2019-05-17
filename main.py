@@ -7,10 +7,11 @@ from functools import partial
 import wx
 
 from attr import attrs, attrib
+from keyboard import send
 from wx.lib.sized_controls import SizedFrame
 from yaml import load, dump, FullLoader
 
-from press import vk_codes, pressHoldRelease
+from press import vk_codes
 from speech import speak
 
 app = wx.App()
@@ -25,7 +26,8 @@ class state:
 
     id = -1  # The id of the most recently created hotkey.
     last_name = None  # The last hotkey that was pressed.
-    key_index = 0  # The index of the most recent alternative.
+    last_alternative = None
+    alternative_index = -1
 
 
 @attrs
@@ -66,36 +68,35 @@ register = wx.Button(panel, label='&Register Hotkey')
 unregister = wx.Button(panel, label='&Unregister Hotkey')
 
 
-def press_alternatives(name, index):
+def press_alternative(alternative):
     """Press some keys if state hasn't changed."""
-    if state.last_name == name and state.key_index == index:
-        keys = hotkey_alternatives[name][index].keys
-        if keys:
-            pressHoldRelease(*keys)
-        else:
-            wx.Bell()
+    if state.last_alternative is alternative:
+        keys = alternative.keys
+        send(keys)
         state.last_name = None
-        state.key_index = 0
+        state.alternative_index = -1
+        state.last_alternative = None
 
 
 def on_hotkey(name, event):
     """A hotkey has been pressed."""
     alternatives = hotkey_alternatives[name]
+    state.alternative_index += 1
     if state.last_name == name:
-        state.key_index += 1
-        if state.key_index >= len(alternatives):
-            state.key_index = 0
+        if state.alternative_index >= len(alternatives):
+            state.alternative_index = 0
     else:
         if state.last_name is not None:
-            press_alternatives(state.last_name, state.key_index)
+            press_alternative(state.last_alternative)
         state.last_name = name
-        state.key_index = 0  # Go back to the start.
+        state.alternative_index = 0  # Go back to the start.
     try:
-        alternative = alternatives[state.key_index]
+        alternative = alternatives[state.alternative_index]
     except IndexError:
         return wx.Bell()
-    state.last_name = name
     speak(alternative.name)
+    state.last_alternative = alternative
+    wx.CallLater(0.25, press_alternative, alternative)
 
 
 def message(message, caption):
@@ -131,7 +132,7 @@ def register_hotkey(name, keys):
 
 def register_alternative(alt):
     """Add an alternative."""
-    alternatives.Append((alt.name, '+'.join(alt.keys)))
+    alternatives.Append((alt.name, alt.keys))
 
 
 @bind(hotkeys, wx.EVT_LIST_ITEM_DESELECTED)
@@ -143,9 +144,11 @@ def on_hotkey_unselected(event):
 @bind(hotkeys, wx.EVT_LIST_ITEM_SELECTED)
 def on_hotkey_selected(event):
     """A hotkey was selected, populate the alternatives list."""
-    name = hotkey_names[hotkeys.GetFocusedItem()]
-    for alternative in hotkey_alternatives[name]:
-        register_alternative(alternative)
+    index = hotkeys.GetFocusedItem()
+    if index != -1:
+        name = hotkey_names[index]
+        for alternative in hotkey_alternatives[name]:
+            register_alternative(alternative)
 
 
 @bind(register, wx.EVT_BUTTON)
@@ -181,20 +184,16 @@ def on_add_alternative(event):
     index = hotkeys.GetFocusedItem()
     if index == -1:
         return wx.Bell()
-    keys = []
-    while True:
-        key = get_key()
-        if key is None:
-            break
-        keys.append(key)
+    keys = wx.GetTextFromUser('Enter keys to send', 'Keys')
     if keys:
         name = wx.GetTextFromUser(
             'Enter a friendly name for this key', caption='Key Name',
-            default_value='+'.join(keys)
+            default_value=keys
         )
-        alt = Alternative(name, keys)
-        hotkey_alternatives[hotkey_names[index]].append(alt)
-        register_alternative(alt)
+        if name:
+            alt = Alternative(name, keys)
+            hotkey_alternatives[hotkey_names[index]].append(alt)
+            register_alternative(alt)
 
 
 @bind(remove_alternative, wx.EVT_BUTTON)
