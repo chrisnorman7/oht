@@ -1,2 +1,2 @@
-pytest
-flake8
+wxpython
+pyyaml
