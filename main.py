@@ -224,6 +224,8 @@ def on_register(event):
     """Register a new hotkey."""
     name = get_key()
     if name is not None:
+        if name in hotkey_names:
+            return message('That hotkey is already in use.', 'Error')
         if not register_hotkey(name):
             message('Failed to register hotkey.', 'Error')
 
