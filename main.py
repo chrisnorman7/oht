@@ -38,7 +38,7 @@ class SoundThread(Thread):
 
 
 app = wx.App()
-modifiers = list(all_modifiers)
+modifiers = sorted(all_modifiers)
 sounds = SoundThread()
 filename = os.path.join(wx.GetHomeDir(), 'oht.yaml')
 frame = SizedFrame(None, title='Onehanded Typing')
@@ -183,10 +183,10 @@ def press_alternative():
         elif isinstance(alt, ModifierAlternative):
             if string in state.modifiers:
                 state.modifiers.remove(string)
-                speak('%s off.' % string)
+                speak('%s up.' % string)
             else:
                 state.modifiers.add(string)
-                speak('%s on' % string)
+                speak('%s down' % string)
         else:
             raise RuntimeError('Unknown alternative: %r.' % alt)
     if frame.Shown:  # Don't bind if the window is closed.
@@ -214,7 +214,14 @@ def on_hotkey(event):
         state.alternative_index = 0  # Go back to the start.
     alternative = alternatives[state.alternative_index]
     state.last_alternative = alternative
-    speak(alternative.name)
+    name = alternative.name
+    if isinstance(alternative, ModifierAlternative):
+        if alternative.send in state.modifiers:
+            s = ' up'
+        else:
+            s = ' down'
+        name += s
+    speak(name)
     timer.Start(interval.GetValue(), oneShot=True)
 
 
@@ -239,7 +246,10 @@ def register_hotkey(name):
     value = vk_codes[name]
     hotkey_convertions[value] = name
     id = wx.NewIdRef().GetId()
-    res = frame.RegisterHotKey(id, 0, value)
+    if bypass.GetValue():
+        res = True
+    else:
+        res = frame.RegisterHotKey(id, 0, value)
     if res:
         hotkey_ids[name] = id
         index = hotkeys.Append((name,))
