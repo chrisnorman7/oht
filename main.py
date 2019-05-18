@@ -1,19 +1,44 @@
 """Bind any key."""
 
 import os
+from threading import Thread
+from winsound import PlaySound
 
 import wx
 from wx.lib.intctrl import IntCtrl
 
 from attr import attrs, attrib
-from keyboard import send
+from keyboard import write
 from wx.lib.sized_controls import SizedFrame
 from yaml import load, dump, FullLoader
 
 from press import vk_codes
 from speech import speak
 
+
+class SoundThread(Thread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.app_running = True
+        self.sounds = []
+
+    def run(self):
+        """Start the thread."""
+        while self.app_running:
+            if self.sounds:
+                PlaySound(self.sounds.pop(-1), 0)
+
+    def queue_sound(self, filename):
+        """Queue another sound."""
+        self.sounds.append(filename)
+
+    def stop(self):
+        """Stop the thread ready for joining."""
+        self.app_running = False
+
+
 app = wx.App()
+sounds = SoundThread()
 filename = os.path.join(wx.GetHomeDir(), 'oht.yaml')
 frame = SizedFrame(None, title='Onehanded Typing')
 timer = wx.Timer(frame)
@@ -101,9 +126,10 @@ def bind_hotkeys():
 
 def press_alternative():
     """Press some keys if state hasn't changed."""
+    sounds.queue_sound(os.path.join('sounds', 'type.wav'))
     unbind_hotkeys()
     keys = state.last_alternative.keys
-    send(keys)
+    write(keys)
     state.last_name = None
     state.alternative_index = -1
     state.last_alternative = None
@@ -264,7 +290,10 @@ if __name__ == '__main__':
                     register_alternative(hotkey, entry['name'], entry['keys'])
     frame.Show(True)
     frame.Maximize()
+    sounds.start()
     app.MainLoop()
+    sounds.stop()
+    sounds.join()
     data = dict(hotkeys=[], alternatives={})
     for name in hotkey_names:
         data['hotkeys'].append(name)
