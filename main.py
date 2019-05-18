@@ -8,7 +8,7 @@ import wx
 from wx.lib.intctrl import IntCtrl
 
 from attr import attrs, attrib
-from keyboard import write
+from keyboard import all_modifiers, send, write
 from wx.lib.sized_controls import SizedFrame
 from yaml import load, dump, FullLoader
 
@@ -38,6 +38,7 @@ class SoundThread(Thread):
 
 
 app = wx.App()
+modifiers = list(all_modifiers)
 sounds = SoundThread()
 filename = os.path.join(wx.GetHomeDir(), 'oht.yaml')
 frame = SizedFrame(None, title='Onehanded Typing')
@@ -52,14 +53,45 @@ class state:
     last_name = None  # The last hotkey that was pressed.
     last_alternative = None
     alternative_index = -1
+    modifiers = set()
 
 
 @attrs
-class Alternative:
-    """An alternative to a hotkey."""
-
+class NameMixin:
     name = attrib()
-    keys = attrib()
+
+
+@attrs
+class SendMixin:
+    send = attrib()
+
+
+@attrs
+class FinishAlternative(NameMixin):
+    """Forces the sending of the last alternative."""
+
+    type = 'Finish'
+
+
+@attrs
+class KeyAlternative(SendMixin, NameMixin):
+    """Sends a key combination."""
+
+    type = 'Key'
+
+
+@attrs
+class TextAlternative(SendMixin, NameMixin):
+    """Sends 1 or more lines of text."""
+
+    type = 'Text'
+
+
+@attrs
+class ModifierAlternative(SendMixin, NameMixin):
+    """Toggles a modifier."""
+
+    type = 'Modifier'
 
 
 def bind(control, event_type):
@@ -83,16 +115,23 @@ hotkeys.AppendColumn('VK Code')
 
 alternatives_label = wx.StaticText(panel, label='&Alternatives')
 alternatives = wx.ListCtrl(panel, style=wx.LC_REPORT)
-alternatives.AppendColumn('Friendly Name')
-alternatives.AppendColumn('Keys')
+for name in ('Type', 'Name', 'Send'):
+    alternatives.AppendColumn(name)
 
-add_alternative_button = wx.Button(panel, label='&New Key')
-remove_alternative_button = wx.Button(panel, label='&Delete Key')
+add_key_button = wx.Button(panel, label='Add &Key')
+add_text_button = wx.Button(panel, label='Add &Text')
+
+add_modifier_button = wx.Button(panel, label='Add &Modifier')
+add_finish_button = wx.Button(panel, label='Add &Finish Button')
 
 register_hotkey_button = wx.Button(panel, label='&Register Hotkey')
 unregister_hotkey_button = wx.Button(panel, label='&Unregister Hotkey')
-bypass = wx.CheckBox(panel, label='&Bypass')
+
+wx.StaticText(panel, label='&Interval')
 interval = IntCtrl(panel, value=500, min=250, max=5000)
+
+remove_alternative_button = wx.Button(panel, label='&Delete Key')
+bypass = wx.CheckBox(panel, label='&Bypass')
 
 
 @bind(frame, wx.EVT_TIMER)
@@ -128,12 +167,30 @@ def press_alternative():
     """Press some keys if state hasn't changed."""
     sounds.queue_sound(os.path.join('sounds', 'type.wav'))
     unbind_hotkeys()
-    keys = state.last_alternative.keys
-    write(keys)
+    alt = state.last_alternative
     state.last_name = None
-    state.alternative_index = -1
     state.last_alternative = None
-    bind_hotkeys()
+    state.alternative_index = -1
+    # FinishAlternative instances do nothing:
+    if not isinstance(alt, FinishAlternative):
+        string = alt.send
+        if isinstance(alt, TextAlternative):
+            write(string)
+        elif isinstance(alt, KeyAlternative):
+            if state.modifiers:
+                string = '+'.join(state.modifiers) + '+' + string
+            send(string)
+        elif isinstance(alt, ModifierAlternative):
+            if string in state.modifiers:
+                state.modifiers.remove(string)
+                speak('%s off.' % string)
+            else:
+                state.modifiers.add(string)
+                speak('%s on' % string)
+        else:
+            raise RuntimeError('Unknown alternative: %r.' % alt)
+    if frame.Shown:  # Don't bind if the window is closed.
+        bind_hotkeys()
 
 
 @bind(frame, wx.EVT_HOTKEY)
@@ -191,16 +248,22 @@ def register_hotkey(name):
     return res
 
 
-def register_alternative(hotkey, name, keys):
+def register_alternative(hotkey, cls, *args):
     """Add an alternative."""
-    alt = Alternative(name, keys)
+    alt = cls(*args)
     hotkey_alternatives.setdefault(hotkey, []).append(alt)
     return alt
 
 
 def add_alternative(alt):
     """Add an alternative to the alternatives list."""
-    alternatives.Append((alt.name, alt.keys))
+    cls = type(alt)
+    name = alt.name
+    if cls is FinishAlternative:
+        send = 'N/A'
+    else:
+        send = alt.send
+    alternatives.Append((cls.type, name, send))
 
 
 @bind(hotkeys, wx.EVT_LIST_ITEM_DESELECTED)
@@ -249,22 +312,50 @@ def on_unregister(event):
         message('Failed to unregister hotkey.', 'Error')
 
 
-@bind(add_alternative_button, wx.EVT_BUTTON)
 def on_add_alternative(event):
     """Add an alternative."""
     index = hotkeys.GetFocusedItem()
     if index == -1:
         return wx.Bell()
-    keys = wx.GetTextFromUser('Enter keys to send', 'Keys')
-    if keys:
-        name = wx.GetTextFromUser(
-            'Enter a friendly name for this key', caption='Key Name',
-            default_value=keys
-        )
-        if name:
-            hotkey = hotkey_names[index]
-            alt = register_alternative(hotkey, name, keys)
-            add_alternative(alt)
+    obj = event.GetEventObject()
+    if obj is add_key_button:
+        cls = KeyAlternative
+        key = wx.GetTextFromUser('Enter keys to send', 'Keys')
+    elif obj is add_modifier_button:
+        cls = ModifierAlternative
+        with wx.SingleChoiceDialog(
+            panel, 'Choose a modifier', 'Modifiers', modifiers
+        ) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            key = dlg.GetStringSelection()
+    elif obj is add_text_button:
+        cls = TextAlternative
+        key = wx.GetTextFromUser('Enter the text to send', 'Text')
+    elif obj is add_finish_button:
+        cls = FinishAlternative
+        key = ''
+    else:
+        raise RuntimeError('Bad coding. Object %r.' % obj)
+    name = wx.GetTextFromUser(
+        'Enter a name', caption='Key Name', default_value=key
+    )
+    if not name:
+        return
+    if not key:
+        # The button was add_finish_button.
+        args = (name,)
+    else:
+        args = (key, name)
+    hotkey = hotkey_names[index]
+    alt = register_alternative(hotkey, cls, *args)
+    add_alternative(alt)
+
+
+for control in (
+    add_key_button, add_text_button, add_modifier_button, add_finish_button
+):
+    bind(control, wx.EVT_BUTTON)(on_add_alternative)
 
 
 @bind(remove_alternative_button, wx.EVT_BUTTON)
@@ -289,7 +380,18 @@ if __name__ == '__main__':
             for hotkey in data.get('hotkeys', []):
                 register_hotkey(hotkey)
                 for entry in data.get('alternatives', {}).get(hotkey, []):
-                    register_alternative(hotkey, entry['name'], entry['keys'])
+                    t = entry.get('type', None)
+                    for cls in (
+                        FinishAlternative, KeyAlternative, TextAlternative,
+                        ModifierAlternative
+                    ):
+                        if t == cls.type:
+                            register_alternative(
+                                hotkey, cls, *entry.get('args', [])
+                            )
+                            break
+                    else:
+                        raise RuntimeError('Invalid alternative type %r.' % t)
     frame.Show(True)
     frame.Maximize()
     sounds.start()
@@ -301,6 +403,9 @@ if __name__ == '__main__':
         data['hotkeys'].append(name)
         data['alternatives'][name] = []
         for a in hotkey_alternatives.get(name, []):
-            data['alternatives'][name].append(dict(name=a.name, keys=a.keys))
+            cls = type(a)
+            attribute_names = [x.name for x in cls.__attrs_attrs__]
+            args = [getattr(a, name) for name in attribute_names]
+            data['alternatives'][name].append(dict(type=cls.type, args=args))
     with open(filename, 'w') as f:
         dump(data, stream=f)
