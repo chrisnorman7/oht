@@ -296,6 +296,62 @@ remove_alternative_button = wx.Button(panel, label='&Delete Key')
 bypass = wx.CheckBox(panel, label='&Bypass')
 
 
+down_id = wx.NewIdRef().GetId()
+up_id = wx.NewIdRef().GetId()
+
+
+def move_alternative(event):
+    """Move an alternative up or down in the list."""
+    index = hotkeys.GetFocusedItem()
+    if index == -1:
+        return wx.Bell()
+    name = hotkey_names[index]
+    index = alternatives.GetFocusedItem()
+    if index == -1:
+        return wx.Bell()
+    if event.GetId() == down_id:
+        diff = 1
+    else:
+        diff = -1
+    pos = index + diff
+    if pos < 0 or pos >= alternatives.GetItemCount():
+        return wx.Bell()
+    alternative = hotkey_alternatives[name].pop(index)
+    data = [
+        alternatives.GetItem(
+            index, x
+        ).GetText() for x in range(alternatives.GetColumnCount())
+    ]
+    alternatives.DeleteItem(index)
+    for col, string in enumerate(data):
+        if not col:
+            alternatives.InsertItem(pos, string)
+        else:
+            alternatives.SetItem(pos, col, string)
+    hotkey_alternatives[name].insert(pos, alternative)
+    alternatives.Select(index)
+    alternatives.Focus(index)
+
+
+for id in (up_id, down_id):
+    bind(alternatives, wx.EVT_MENU, id=id)(move_alternative)
+
+move_modifiers = wx.ACCEL_CTRL | wx.ACCEL_SHIFT
+
+alternatives.SetAcceleratorTable(
+    wx.AcceleratorTable(
+        (
+            wx.AcceleratorEntry(
+                flags=move_modifiers, keyCode=wx.WXK_DOWN, cmd=down_id
+            ),
+            wx.AcceleratorEntry(
+                flags=move_modifiers, keyCode=wx.WXK_UP, cmd=up_id
+            )
+        )
+    )
+)
+
+
 @bind(frame, wx.EVT_TIMER)
 def on_timer(event):
     """The time is up."""
