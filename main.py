@@ -256,11 +256,11 @@ class ModifierAlternative(SendMixin, NameMixin):
     type = 'Modifier'
 
 
-def bind(control, event_type):
+def bind(control, event_type, id=wx.ID_ANY):
     """Bind a function to a control, using event_type."""
 
     def inner(func):
-        control.Bind(event_type, func)
+        control.Bind(event_type, func, id=id)
         return func
 
     return inner
