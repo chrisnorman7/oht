@@ -384,7 +384,10 @@ def on_hotkey(event):
             s = ' down'
         name += s
     speak(name)
-    timer.Start(interval.GetValue(), oneShot=True)
+    if isinstance(alternative, FinishAlternative):
+        press_alternative()
+    else:
+        timer.Start(interval.GetValue(), oneShot=True)
 
 
 def message(message, caption):
