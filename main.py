@@ -603,11 +603,36 @@ def on_remove_alternative(event):
     alternatives.DeleteItem(index)
 
 
+@bind(frame, wx.EVT_CLOSE)
+def on_close(event):
+    """Save configuration."""
+    data = dict(
+        hotkeys=[], alternatives={}, options=dict(
+            bypass=bypass.GetValue(),
+            interval=interval.GetValue()
+        )
+    )
+    for name in hotkey_names:
+        data['hotkeys'].append(name)
+        data['alternatives'][name] = []
+        for a in hotkey_alternatives.get(name, []):
+            cls = type(a)
+            attribute_names = [x.name for x in cls.__attrs_attrs__]
+            args = [getattr(a, name) for name in attribute_names]
+            data['alternatives'][name].append(dict(type=cls.type, args=args))
+    with open(filename, 'w') as f:
+        dump(data, stream=f)
+    event.Skip()
+
+
 if __name__ == '__main__':
     if os.path.isfile(filename):
         with open(filename, 'r') as f:
             data = load(f, Loader=FullLoader)
         if data is not None:
+            options = data.get('options', {})
+            bypass.SetValue(options.get('bypass', bypass.GetValue()))
+            interval.SetValue(options.get('interval', interval.GetValue()))
             for hotkey in data.get('hotkeys', []):
                 register_hotkey(hotkey)
                 for entry in data.get('alternatives', {}).get(hotkey, []):
@@ -629,14 +654,3 @@ if __name__ == '__main__':
     app.MainLoop()
     sounds.stop()
     sounds.join()
-    data = dict(hotkeys=[], alternatives={})
-    for name in hotkey_names:
-        data['hotkeys'].append(name)
-        data['alternatives'][name] = []
-        for a in hotkey_alternatives.get(name, []):
-            cls = type(a)
-            attribute_names = [x.name for x in cls.__attrs_attrs__]
-            args = [getattr(a, name) for name in attribute_names]
-            data['alternatives'][name].append(dict(type=cls.type, args=args))
-    with open(filename, 'w') as f:
-        dump(data, stream=f)
