@@ -1,0 +1,258 @@
+alternatives:
+  \:
+  - args:
+    - p
+    - p
+    type: Key
+  - args:
+    - q
+    - q
+    type: Key
+  - args:
+    - r
+    - r
+    type: Key
+  - args:
+    - s
+    - s
+    type: Key
+  - args:
+    - '7'
+    - '7'
+    type: Key
+  a:
+  - args:
+    - g
+    - g
+    type: Key
+  - args:
+    - h
+    - h
+    type: Key
+  - args:
+    - i
+    - i
+    type: Key
+  - args:
+    - '4'
+    - '4'
+    type: Key
+  c:
+  - args:
+    - space
+    - space
+    type: Key
+  - args:
+    - ''''
+    - ''''
+    type: Key
+  - args:
+    - ;
+    - ;
+    type: Key
+  - args:
+    - '-'
+    - '-'
+    type: Key
+  - args:
+    - '='
+    - '='
+    type: Key
+  - args:
+    - ' - '
+    - hyphen
+    type: Text
+  d:
+  - args:
+    - m
+    - m
+    type: Key
+  - args:
+    - n
+    - n
+    type: Key
+  - args:
+    - o
+    - o
+    type: Key
+  - args:
+    - '6'
+    - '6'
+    type: Key
+  e:
+  - args:
+    - d
+    - d
+    type: Key
+  - args:
+    - e
+    - e
+    type: Key
+  - args:
+    - f
+    - f
+    type: Key
+  - args:
+    - '3'
+    - '3'
+    type: Key
+  f:
+  - args:
+    - left shift
+    - Shift
+    type: Modifier
+  - args:
+    - BACKSPACE
+    - BACKSPACE
+    type: Key
+  - args:
+    - left ctrl
+    - Control
+    type: Modifier
+  - args:
+    - left alt
+    - Alt
+    type: Modifier
+  - args:
+    - return
+    - return
+    type: Key
+  q:
+  - args:
+    - .
+    - .
+    type: Key
+  - args:
+    - ','
+    - ','
+    type: Key
+  - args:
+    - '?'
+    - '?'
+    type: Text
+  - args:
+    - '!'
+    - '!'
+    type: Text
+  - args:
+    - '1'
+    - '1'
+    type: Key
+  r:
+  - args:
+    - (
+    - (
+    type: Key
+  - args:
+    - )
+    - )
+    type: Key
+  - args:
+    - '['
+    - '['
+    type: Key
+  - args:
+    - ']'
+    - ']'
+    type: Key
+  - args:
+    - '{'
+    - '{'
+    type: Key
+  - args:
+    - '}'
+    - '}'
+    type: Key
+  s:
+  - args:
+    - j
+    - j
+    type: Key
+  - args:
+    - k
+    - k
+    type: Key
+  - args:
+    - l
+    - l
+    type: Key
+  - args:
+    - '5'
+    - '5'
+    type: Key
+  v:
+  - args:
+    - Finish
+    type: Finish
+  w:
+  - args:
+    - a
+    - a
+    type: Key
+  - args:
+    - b
+    - b
+    type: Key
+  - args:
+    - c
+    - c
+    type: Key
+  - args:
+    - '2'
+    - '2'
+    type: Key
+  x:
+  - args:
+    - w
+    - w
+    type: Key
+  - args:
+    - x
+    - x
+    type: Key
+  - args:
+    - y
+    - y
+    type: Key
+  - args:
+    - z
+    - z
+    type: Key
+  - args:
+    - '9'
+    - '9'
+    type: Key
+  z:
+  - args:
+    - t
+    - t
+    type: Key
+  - args:
+    - u
+    - u
+    type: Key
+  - args:
+    - v
+    - v
+    type: Key
+  - args:
+    - '8'
+    - '8'
+    type: Key
+hotkeys:
+- q
+- w
+- e
+- a
+- s
+- d
+- \
+- z
+- x
+- c
+- f
+- r
+- v
+options:
+  bypass: false
+  interval: 500

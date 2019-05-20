@@ -91,10 +91,8 @@ ENV/
 .ropeproject
 # Database files:
 *.json
-*.yaml
 # PID files:
 *.pid
-*.yaml
 *.sqlite3
 .pytest_cache
 AUTHORS
