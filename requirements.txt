@@ -1,3 +1,4 @@
 wxpython
 pyyaml
 keyboard
+pywin32
